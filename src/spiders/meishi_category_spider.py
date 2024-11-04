@@ -1,43 +1,51 @@
 import scrapy
-from typing import (
-    Iterator,
-    Dict,
-)
-import json
+from typing import Dict, List, Iterator
+from urllib.parse import urljoin
+import re
 
 
-class MeishiSpider(scrapy.Spider):
-    name = "meishi_spider"
+class MeishiCategorySpider(scrapy.Spider):
+    name = "meishi_category_spider"
     allowed_domains = [
         "m.meishichina.com",
         "i3.meishichina.com",
         "i3i620.meishichina.com",
     ]
-    start_urls = ["https://m.meishichina.com/ajax.php?ac=m&op=getTimeLineList&page=1"]
+    start_urls = ["https://m.meishichina.com/recipe/"]
 
-    def parse(self, response) -> Iterator[dict]:
-        # Parse JSON response
-        data = json.loads(response.text)
-        recipes = data.get("data", [])
+    def parse(self, response):
+        """Parse the main category page to find all category links"""
+        # Find all links that start with /recipe/category/
+        category_links = response.css(
+            'a[href*="/recipe/category/"]::attr(href)'
+        ).getall()
 
-        for recipe in recipes:
-            # Only process items that are recipes and have remark as "菜谱"
-            if recipe.get("type") == "recipe" and recipe.get("remark") == "菜谱":
-                recipe_url = recipe.get("wapurl")
-                if recipe_url:
+        # Filter and process unique category links
+        unique_categories = set()
+        for link in category_links:
+            # Convert relative URLs to absolute URLs if necessary
+            full_url = response.urljoin(link)
+            if full_url not in unique_categories:
+                unique_categories.add(full_url)
+                # Generate paginated URLs for each category (1-100)
+                for page in range(1, 101):
+                    paginated_url = f"{full_url}/{page}/"
                     yield scrapy.Request(
-                        url=recipe_url,
-                        callback=self.parse_recipe,
+                        paginated_url,
+                        callback=self.parse_category_page,
+                        meta={"category_url": full_url},
                     )
 
-        # Handle pagination by incrementing page number
-        current_page = int(response.url.split("page=")[1])
-        next_page = current_page + 1
-        next_url = f"https://m.meishichina.com/ajax.php?ac=m&op=getTimeLineList&page={next_page}"
+    def parse_category_page(self, response):
+        """Parse each category page to find recipe links"""
+        # Extract recipe links from the category page
+        recipe_links = response.css('a[href*="/recipe/"]::attr(href)').getall()
 
-        # Continue to next page if we have recipes in current response
-        if recipes:
-            yield scrapy.Request(next_url)
+        for link in recipe_links:
+            # Filter out category links and ensure we only process recipe detail pages
+            if "/category/" not in link and re.match(r".*/recipe/\d+/?$", link):
+                full_url = response.urljoin(link)
+                yield scrapy.Request(full_url, callback=self.parse_recipe)
 
     def parse_recipe(self, response) -> Iterator[Dict]:
         # Extract recipe_id from URL

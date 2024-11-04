@@ -25,7 +25,7 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 ITEM_PIPELINES = {
     "src.pipelines.MeishiImagePipeline": 1,
-    "src.pipelines.MeishiPipeline": 300,
+    # "src.pipelines.MeishiPipeline": 300,
 }
 
 # Enable and configure HTTP caching
