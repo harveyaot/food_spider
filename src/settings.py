@@ -9,11 +9,6 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
 
-# Configure maximum concurrent requests
-CONCURRENT_REQUESTS = 16
-
-# Configure a delay for requests for the same website (default: 0)
-DOWNLOAD_DELAY = 1
 
 # Enable or disable downloader middlewares
 DOWNLOADER_MIDDLEWARES = {
@@ -34,15 +29,15 @@ HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = "httpcache"
 
 # Add meishichina specific settings
-CONCURRENT_REQUESTS_PER_DOMAIN = 2
-DOWNLOAD_DELAY = 5  # Be polite with the server
+CONCURRENT_REQUESTS_PER_DOMAIN = 5
+DOWNLOAD_DELAY = 2  # Be polite with the server
 RANDOMIZE_DOWNLOAD_DELAY = True
 
 # Export feed in utf-8 encoding
 FEED_EXPORT_ENCODING = "utf-8"
 
 # Images settings
-IMAGES_STORE = "images"
+IMAGES_STORE = "images2"
 IMAGES_URLS_FIELD = "image_urls"
 IMAGES_RESULT_FIELD = "image_paths"
 
@@ -51,7 +46,7 @@ DOWNLOAD_TIMEOUT = 180
 DOWNLOAD_FAIL_ON_DATALOSS = False
 
 # Allow image domains
-IMAGES_DOMAINS = ["i3.meishichina.com", "i3i620.meishichina.com"]
+IMAGES_DOMAINS = ["meishichina.com"]
 
 # Disable the offsite middleware for image domains
 SPIDER_MIDDLEWARES = {"scrapy.spidermiddlewares.offsite.OffsiteMiddleware": None}
@@ -65,12 +60,3 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Images Pipeline Settings
 MEDIA_ALLOW_REDIRECTS = True
-
-# Important: Add these settings
-ITEM_PIPELINES = {
-    "src.pipelines.MeishiImagePipeline": 1,
-    "src.pipelines.MeishiPipeline": 300,
-}
-
-# Configure a download delay
-DOWNLOAD_DELAY = 1

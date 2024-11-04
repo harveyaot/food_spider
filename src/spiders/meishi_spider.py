@@ -59,18 +59,20 @@ class MeishiSpider(scrapy.Spider):
             if not section_name:
                 continue
 
-            # Get ingredients under this section
+            # Get ingredients under this section - more generic approach
             ingredients = []
-            ingredient_elements = section.xpath("./following-sibling::ul[1]/li/a")
+            # Just target li elements and find spans within them
+            ingredient_elements = section.xpath("./following-sibling::ul[1]/li")
 
             for ingredient in ingredient_elements:
-                # Extract both name and amount
+                # Get all spans within the li element, regardless of parent structure
                 spans = ingredient.xpath(".//span/text()").getall()
                 if len(spans) >= 2:
-                    ingredients.append({"name": spans[0], "amount": spans[1]})
+                    name, amount = spans[0], spans[1]
+                    ingredients.append({"name": name.strip(), "amount": amount.strip()})
 
-            # Add to ingredients data using section name as key
-            ingredients_data[section_name] = ingredients
+            if ingredients:
+                ingredients_data[section_name] = ingredients
 
         # Get cooking steps with images - updated parsing logic
         steps = []

@@ -6,11 +6,7 @@ import re
 
 class MeishiCategorySpider(scrapy.Spider):
     name = "meishi_category_spider"
-    allowed_domains = [
-        "m.meishichina.com",
-        "i3.meishichina.com",
-        "i3i620.meishichina.com",
-    ]
+    allowed_domains = ["meishichina.com"]
     start_urls = ["https://m.meishichina.com/recipe/"]
 
     def parse(self, response):
@@ -27,22 +23,40 @@ class MeishiCategorySpider(scrapy.Spider):
             full_url = response.urljoin(link)
             if full_url not in unique_categories:
                 unique_categories.add(full_url)
-                # Generate paginated URLs for each category (1-100)
-                for page in range(1, 101):
-                    paginated_url = f"{full_url}/{page}/"
-                    yield scrapy.Request(
-                        paginated_url,
-                        callback=self.parse_category_page,
-                        meta={"category_url": full_url},
-                    )
+                # Start with page 1 and handle pagination dynamically
+                yield scrapy.Request(
+                    f"{full_url}/1/",
+                    callback=self.parse_category_page,
+                    meta={"category_url": full_url, "current_page": 1},
+                    dont_filter=False,  # Enable duplicate filtering
+                )
 
     def parse_category_page(self, response):
         """Parse each category page to find recipe links"""
+        # Check if we got redirected (indicating invalid page)
+        if response.url != response.request.url:
+            return
+
         # Extract recipe links from the category page
         recipe_links = response.css('a[href*="/recipe/"]::attr(href)').getall()
 
+        # If we found valid recipe links, continue to next page
+        if recipe_links:
+            current_page = response.meta["current_page"]
+            next_page = current_page + 1
+
+            # Only continue if we're below page 100
+            if next_page <= 100:
+                category_url = response.meta["category_url"]
+                yield scrapy.Request(
+                    f"{category_url}/{next_page}/",
+                    callback=self.parse_category_page,
+                    meta={"category_url": category_url, "current_page": next_page},
+                    dont_filter=False,
+                )
+
+        # Process recipe links
         for link in recipe_links:
-            # Filter out category links and ensure we only process recipe detail pages
             if "/category/" not in link and re.match(r".*/recipe/\d+/?$", link):
                 full_url = response.urljoin(link)
                 yield scrapy.Request(full_url, callback=self.parse_recipe)
@@ -67,18 +81,20 @@ class MeishiCategorySpider(scrapy.Spider):
             if not section_name:
                 continue
 
-            # Get ingredients under this section
+            # Get ingredients under this section - more generic approach
             ingredients = []
-            ingredient_elements = section.xpath("./following-sibling::ul[1]/li/a")
+            # Just target li elements and find spans within them
+            ingredient_elements = section.xpath("./following-sibling::ul[1]/li")
 
             for ingredient in ingredient_elements:
-                # Extract both name and amount
+                # Get all spans within the li element, regardless of parent structure
                 spans = ingredient.xpath(".//span/text()").getall()
                 if len(spans) >= 2:
-                    ingredients.append({"name": spans[0], "amount": spans[1]})
+                    name, amount = spans[0], spans[1]
+                    ingredients.append({"name": name.strip(), "amount": amount.strip()})
 
-            # Add to ingredients data using section name as key
-            ingredients_data[section_name] = ingredients
+            if ingredients:
+                ingredients_data[section_name] = ingredients
 
         # Get cooking steps with images - updated parsing logic
         steps = []
