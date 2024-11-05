@@ -1,4 +1,4 @@
-BOT_NAME = "web_scraper"
+BOT_NAME = "apple_ccc"
 
 SPIDER_MODULES = ["src.spiders"]
 NEWSPIDER_MODULE = "src.spiders"
@@ -29,7 +29,7 @@ HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = "httpcache"
 
 # Add meishichina specific settings
-CONCURRENT_REQUESTS_PER_DOMAIN = 5
+CONCURRENT_REQUESTS_PER_DOMAIN = 10
 DOWNLOAD_DELAY = 2  # Be polite with the server
 RANDOMIZE_DOWNLOAD_DELAY = True
 
@@ -37,7 +37,7 @@ RANDOMIZE_DOWNLOAD_DELAY = True
 FEED_EXPORT_ENCODING = "utf-8"
 
 # Images settings
-IMAGES_STORE = "images2"
+IMAGES_STORE = "images3"
 IMAGES_URLS_FIELD = "image_urls"
 IMAGES_RESULT_FIELD = "image_paths"
 
