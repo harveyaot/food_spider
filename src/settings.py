@@ -1,4 +1,4 @@
-BOT_NAME = "apple_ccc"
+BOT_NAME = "trump_vs_harris"
 
 SPIDER_MODULES = ["src.spiders"]
 NEWSPIDER_MODULE = "src.spiders"

@@ -11,7 +11,13 @@ class MeishiSelectedSpider(scrapy.Spider):
     allowed_domains = ["meishichina.com", "!i8.meishichina.com"]
 
     def start_requests(self):
-        """Generate initial requests for categories and popular/hot pages"""
+        """Generate initial request for the main recipe page"""
+        yield scrapy.Request(
+            "https://m.meishichina.com/recipe/", callback=self.parse_categories
+        )
+
+    def parse_categories(self, response):
+        """Parse the main recipe page to extract categories"""
         # Load quota configuration
         with open("meishi_quota.json") as f:
             quotas = json.load(f)
@@ -20,31 +26,19 @@ class MeishiSelectedSpider(scrapy.Spider):
         hot_quota = quotas.get("all.hot", 0)
         pop_quota = quotas.get("all.pop", 0)
 
-        # Handle both hot and popular pages
-        for page_type, quota in [("hot", hot_quota), ("pop", pop_quota)]:
-            if quota < 1:
-                continue
-            yield scrapy.Request(
-                f"https://m.meishichina.com/recipe/all/{page_type}/1/",
-                callback=self.parse_recipe_list,
-                meta={"page_type": page_type, "current_page": 1, "quota": quota},
-            )
+        # Parse categories directly from the page
+        category_links = response.css(
+            'a[href*="/recipe/category/"]::attr(href)'
+        ).getall()
+        for link in category_links:
+            cat_key = link.split("/category/")[-1].strip("/")
 
-        # Extract categories from quota configuration
-        categories = [
-            key.split(".")[-1]
-            for key in quotas.keys()
-            if key.startswith("category.") and not key.startswith("category._")
-        ]
-
-        # Process each category
-        for cat_key in categories:
             quota = quotas.get(
                 f"category.{cat_key}", quotas.get("category._default", 5)
             )
             if quota < 1:
                 continue
-            # Start with page 1 and let parse_recipe_list handle pagination
+
             yield scrapy.Request(
                 f"https://m.meishichina.com/recipe/category/{cat_key}/1/",
                 callback=self.parse_recipe_list,
@@ -54,6 +48,16 @@ class MeishiSelectedSpider(scrapy.Spider):
                     "quota": quota,
                     "page_type": "category",
                 },
+            )
+
+        # Handle both hot and popular pages
+        for page_type, quota in [("hot", hot_quota), ("pop", pop_quota)]:
+            if quota < 1:
+                continue
+            yield scrapy.Request(
+                f"https://m.meishichina.com/recipe/all/{page_type}/1/",
+                callback=self.parse_recipe_list,
+                meta={"page_type": page_type, "current_page": 1, "quota": quota},
             )
 
     def parse_recipe_list(self, response):
