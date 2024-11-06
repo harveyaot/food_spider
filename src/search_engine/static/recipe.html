@@ -44,6 +44,9 @@
     </div>
 
     <script>
+        // Configuration
+        const API_BASE_URL = '';
+
         async function loadRecipe() {
             // Get recipe ID from URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -55,7 +58,7 @@
             }
 
             // Fetch recipe data
-            const response = await fetch(`http://localhost:8001/recipe/${recipeId}`);
+            const response = await fetch(`${API_BASE_URL}/recipe/${recipeId}`);
             if (!response.ok) {
                 window.location.href = '/';
                 return;

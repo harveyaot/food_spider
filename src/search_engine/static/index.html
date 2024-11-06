@@ -42,8 +42,9 @@
 
     <script>
         // Configuration
-        const API_BASE_URL = 'http://localhost:8001';
+        const API_BASE_URL = '';
         const ITEMS_PER_PAGE = 12;
+        const DEFAULT_CATEGORY = '热菜';
         let currentPage = 1;
         let totalPages = 1;
         let currentCategory = null;
@@ -64,7 +65,7 @@
             });
 
             // Load default results for "热菜" category
-            await searchByCategory('热菜');
+            await searchByCategory(DEFAULT_CATEGORY);
         };
 
         async function search() {
