@@ -67,7 +67,7 @@ class RecipeIndexer:
 
             # Extract step text from step dictionaries
             steps = recipe.get("steps", [])
-            if isinstance(steps[0], dict):
+            if steps and isinstance(steps[0], dict):
                 steps_text = " ".join(step.get("text", "") for step in steps)
             else:
                 steps_text = " ".join(str(step) for step in steps)

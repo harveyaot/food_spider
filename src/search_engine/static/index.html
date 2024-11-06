@@ -56,17 +56,49 @@
             const data = await response.json();
 
             const categoriesDiv = document.getElementById('categories');
-            Object.entries(data.categories).forEach(([category, count]) => {
+            const categoryEntries = Object.entries(data.categories)
+                .sort((a, b) => b[1] - a[1]);
+
+            // Display initial top 10 categories
+            displayCategories(categoryEntries.slice(0, 10));
+
+            // Add "Show More" button if there are more categories
+            if (categoryEntries.length > 10) {
+                const showMoreBtn = document.createElement('button');
+                showMoreBtn.className = 'bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600';
+                showMoreBtn.textContent = '显示更多';
+                showMoreBtn.onclick = () => {
+                    displayCategories(categoryEntries); // Show all categories
+                    showMoreBtn.remove(); // Remove the button after showing all
+
+                    // Add show less button
+                    const showLessBtn = document.createElement('button');
+                    showLessBtn.className = 'bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600';
+                    showLessBtn.textContent = '显示更少';
+                    showLessBtn.onclick = () => {
+                        displayCategories(categoryEntries.slice(0, 10)); // Show only top 10
+                        categoriesDiv.appendChild(showMoreBtn);
+                    };
+                    categoriesDiv.appendChild(showLessBtn);
+                };
+                categoriesDiv.appendChild(showMoreBtn);
+            }
+
+            // Load default results for "热菜" category
+            await searchByCategory(DEFAULT_CATEGORY);
+        };
+
+        function displayCategories(categories) {
+            const categoriesDiv = document.getElementById('categories');
+            categoriesDiv.innerHTML = '';
+            categories.forEach(([category, count]) => {
                 const button = document.createElement('button');
                 button.className = 'bg-gray-200 px-3 py-1 rounded hover:bg-gray-300';
                 button.textContent = `${category} (${count})`;
                 button.onclick = () => searchByCategory(category);
                 categoriesDiv.appendChild(button);
             });
-
-            // Load default results for "热菜" category
-            await searchByCategory(DEFAULT_CATEGORY);
-        };
+        }
 
         async function search() {
             const query = document.getElementById('searchInput').value;
