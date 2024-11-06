@@ -19,7 +19,7 @@ __pycache__/
 
 images/*
 images2/*
-images3/*
+images3/* 
 *.json
 
 .scrapy/*
