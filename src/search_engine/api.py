@@ -53,7 +53,7 @@ async def get_recipes_by_category(
 
 @app.get("/recipe/{recipe_id}")
 async def get_recipe(recipe_id: str):
-    results = indexer.search(f"recipe_id:{recipe_id}", limit=1)
+    results = indexer.search(f"recipe_id:{recipe_id}", per_page=1)
     if not results:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"recipe": results[0]}
+    return {"recipe": results["items"][0]}
