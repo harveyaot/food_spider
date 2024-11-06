@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜谱详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Back button -->
+        <a href="/" class="inline-block mb-4 text-blue-500 hover:text-blue-700">
+            ← 返回搜索
+        </a>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <!-- Recipe header -->
+            <div class="mb-6">
+                <h1 id="recipe-title" class="text-3xl font-bold mb-4"></h1>
+                <img id="recipe-image" class="w-full h-96 object-cover rounded-lg mb-4" src="" alt="">
+                <div id="recipe-categories" class="flex flex-wrap gap-2 mb-4"></div>
+            </div>
+
+            <!-- Ingredients -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">食材配料</h2>
+                <div id="recipe-ingredients" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Steps -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">烹饪步骤</h2>
+                <ol id="recipe-steps" class="list-decimal list-inside space-y-4"></ol>
+            </div>
+
+            <!-- Tips -->
+            <div id="tips-section" class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">小贴士</h2>
+                <div id="recipe-tips" class="bg-yellow-50 p-4 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadRecipe() {
+            // Get recipe ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipeId = urlParams.get('id');
+
+            if (!recipeId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Fetch recipe data
+            const response = await fetch(`http://localhost:8001/recipe/${recipeId}`);
+            if (!response.ok) {
+                window.location.href = '/';
+                return;
+            }
+
+            const data = await response.json();
+            const recipe = data.recipe;
+
+            // Update page title
+            document.title = `${recipe.title} - 菜谱详情`;
+
+            // Fill in recipe details
+            document.getElementById('recipe-title').textContent = recipe.title;
+            document.getElementById('recipe-image').src = recipe.image_url;
+            document.getElementById('recipe-image').alt = recipe.title;
+
+            // Categories
+            const categoriesDiv = document.getElementById('recipe-categories');
+            recipe.categories.forEach(category => {
+                const span = document.createElement('span');
+                span.className = 'bg-gray-200 px-3 py-1 rounded-full text-sm';
+                span.textContent = category;
+                categoriesDiv.appendChild(span);
+            });
+
+            // Ingredients
+            const ingredientsDiv = document.getElementById('recipe-ingredients');
+            Object.entries(recipe.ingredients).forEach(([section, items]) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
+                sectionDiv.innerHTML = `
+                    <h3 class="font-bold mb-3 pb-2 border-b border-gray-200">${section}</h3>
+                    <ul class="space-y-3">
+                        ${items.map(item => `
+                            <li class="flex justify-between items-center py-2 px-3 bg-white rounded hover:bg-gray-50">
+                                <span class="font-medium">${item.name}</span>
+                                <span class="text-gray-600 ml-4">${item.amount}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                ingredientsDiv.appendChild(sectionDiv);
+            });
+
+            // Steps
+            const stepsOl = document.getElementById('recipe-steps');
+            recipe.steps.forEach(step => {
+                const li = document.createElement('li');
+                li.className = 'pl-2 mb-4';
+                const stepContent = document.createElement('div');
+                stepContent.className = 'mt-2';
+
+                // Add step text
+                stepContent.textContent = step.text;
+
+                // Add step image if available
+                if (step.image) {
+                    const img = document.createElement('img');
+                    img.src = step.image;
+                    img.alt = step.text;
+                    img.className = 'mt-2 rounded-lg max-w-md';
+                    stepContent.appendChild(img);
+                }
+
+                li.appendChild(stepContent);
+                stepsOl.appendChild(li);
+            });
+
+            // Tips
+            const tipsSection = document.getElementById('tips-section');
+            const tipsDiv = document.getElementById('recipe-tips');
+            if (recipe.tips && recipe.tips.length > 0) {
+                tipsDiv.innerHTML = recipe.tips.map(tip => `<p>${tip}</p>`).join('');
+            } else {
+                tipsSection.style.display = 'none';
+            }
+        }
+
+        // Load recipe data when page loads
+        window.onload = loadRecipe;
+    </script>
+</body>
+
+</html>

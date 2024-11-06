@@ -19,6 +19,10 @@ __pycache__/
 
 images/*
 images2/*
+images3/*
 *.json
 
 .scrapy/*
+
+recipe_index/
+*.tgz

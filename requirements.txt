@@ -1,3 +1,14 @@
 scrapy>=2.11.0
 itemadapter>=0.8.0
 pillow==11.0.0
+
+# Search engine packages
+fastapi
+uvicorn
+whoosh
+jieba
+
+# Additional dependencies for the web application
+typing-extensions
+pydantic
+starlette

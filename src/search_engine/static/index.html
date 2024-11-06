@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜谱搜索</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-4">菜谱搜索</h1>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" class="flex-1 p-2 border rounded" placeholder="搜索菜谱、食材、步骤...">
+                <button onclick="search()" class="bg-blue-500 text-white px-4 py-2 rounded">
+                    搜索
+                </button>
+            </div>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">分类浏览</h2>
+            <div id="categories" class="flex flex-wrap gap-2">
+                <!-- Categories will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Results will be inserted here -->
+        </div>
+
+        <!-- Pagination Section -->
+        <div id="pagination" class="flex justify-center gap-2 mt-4">
+            <!-- Pagination will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8001';
+        const ITEMS_PER_PAGE = 12;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentCategory = null;
+        let currentQuery = null;
+
+        // Load categories on page load
+        window.onload = async () => {
+            const response = await fetch(`${API_BASE_URL}/categories/`);
+            const data = await response.json();
+
+            const categoriesDiv = document.getElementById('categories');
+            Object.entries(data.categories).forEach(([category, count]) => {
+                const button = document.createElement('button');
+                button.className = 'bg-gray-200 px-3 py-1 rounded hover:bg-gray-300';
+                button.textContent = `${category} (${count})`;
+                button.onclick = () => searchByCategory(category);
+                categoriesDiv.appendChild(button);
+            });
+
+            // Load default results for "热菜" category
+            await searchByCategory('热菜');
+        };
+
+        async function search() {
+            const query = document.getElementById('searchInput').value;
+            currentQuery = query;
+            currentCategory = null;
+            currentPage = 1;
+            await fetchResults();
+        }
+
+        async function searchByCategory(category) {
+            currentCategory = category;
+            currentQuery = null;
+            currentPage = 1;
+            await fetchResults();
+        }
+
+        async function fetchResults() {
+            let url;
+            if (currentCategory) {
+                url = `${API_BASE_URL}/recipes/by_category/${encodeURIComponent(currentCategory)}?page=${currentPage}&per_page=${ITEMS_PER_PAGE}`;
+            } else if (currentQuery) {
+                url = `${API_BASE_URL}/search/?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&per_page=${ITEMS_PER_PAGE}`;
+            } else {
+                return;
+            }
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                totalPages = data.pagination.total_pages;
+                displayResults(data.items || []);
+                displayPagination();
+            } catch (error) {
+                console.error('Error fetching results:', error);
+                displayResults([]);
+                totalPages = 1;
+                displayPagination();
+            }
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">No results found</div>';
+                return;
+            }
+
+            results.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded shadow cursor-pointer hover:shadow-lg transition-shadow';
+                card.onclick = () => window.location.href = `${API_BASE_URL}/recipe.html?id=${recipe.recipe_id}`;
+                card.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${recipe.title}</h3>
+                    <img src="${recipe.image_url}" alt="${recipe.title}" class="w-full h-48 object-cover mb-2">
+                    <div class="text-sm text-gray-600">
+                        <p>分类: ${recipe.categories.join(', ')}</p>
+                        ${recipe.tips.length ? `<p class="mt-2">小贴士: ${recipe.tips[0]}</p>` : ''}
+                    </div>
+                `;
+                resultsDiv.appendChild(card);
+            });
+        }
+
+        function displayPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = `
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="changePage(1)" class="px-3 py-1 rounded bg-gray-200 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                        First
+                    </button>
+                    <button onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded bg-gray-200 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                        Previous
+                    </button>
+                    <span class="px-3 py-1">Page ${currentPage} of ${totalPages}</span>
+                    <button onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded bg-gray-200 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">
+                        Next
+                    </button>
+                    <button onclick="changePage(${totalPages})" class="px-3 py-1 rounded bg-gray-200 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">
+                        Last
+                    </button>
+                    <button onclick="changePage(Math.floor(Math.random() * totalPages) + 1)" class="px-3 py-1 rounded bg-blue-500 text-white">
+                        Random
+                    </button>
+                </div>
+            `;
+        }
+
+        async function changePage(newPage) {
+            if (newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            await fetchResults();
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+
+</html>
