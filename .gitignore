@@ -1,3 +1,6 @@
+# keep dockerfile invisible
+Dockerfile
+
 # Virtual Environment
 venv/
 env/

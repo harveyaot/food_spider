@@ -1,4 +1,4 @@
-BOT_NAME = "trump_vs_harris"
+BOT_NAME = "11_11_PA"
 
 SPIDER_MODULES = ["src.spiders"]
 NEWSPIDER_MODULE = "src.spiders"
@@ -37,7 +37,7 @@ RANDOMIZE_DOWNLOAD_DELAY = True
 FEED_EXPORT_ENCODING = "utf-8"
 
 # Images settings
-IMAGES_STORE = "images3"
+IMAGES_STORE = "images_steps"
 IMAGES_URLS_FIELD = "image_urls"
 IMAGES_RESULT_FIELD = "image_paths"
 
