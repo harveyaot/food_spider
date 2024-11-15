@@ -29,7 +29,7 @@ class MeishiImagePipeline(ImagesPipeline):
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": item.get("detail_url", "https://m.meishichina.com/"),
         }
-        
+
         # Handle main recipe image
         if item.get("image_url"):
             yield scrapy.Request(
@@ -42,9 +42,10 @@ class MeishiImagePipeline(ImagesPipeline):
                 dont_filter=True,
                 errback=self.download_error,
             )
-        
+
         # Handle step images
-        if item.get("steps"):
+        # hack disable step images for now
+        if item.get("steps_dummy"):
             headers["Referer"] = item.get("detail_url", "https://m.meishichina.com/")
             for idx, step in enumerate(item["steps"]):
                 if step.get("image"):
@@ -55,7 +56,7 @@ class MeishiImagePipeline(ImagesPipeline):
                             "recipe_id": item["recipe_id"],
                             "image_type": "step",
                             "step_index": idx,
-                            "step_text": step.get("text", "")
+                            "step_text": step.get("text", ""),
                         },
                         dont_filter=True,
                         errback=self.download_error,
@@ -69,16 +70,16 @@ class MeishiImagePipeline(ImagesPipeline):
         try:
             recipe_id = request.meta.get("recipe_id")
             image_type = request.meta.get("image_type")
-            
+
             path = urlparse(request.url).path
             ext = os.path.splitext(path)[1] or ".jpg"
-            
+
             if image_type == "main":
-                return f'recipe_images/{recipe_id}/main{ext}'
+                return f"recipe_images/{recipe_id}/main{ext}"
             elif image_type == "step":
                 step_index = request.meta.get("step_index")
-                return f'recipe_images/{recipe_id}/step_{step_index}{ext}'
-            
+                return f"recipe_images/{recipe_id}/step_{step_index}{ext}"
+
             return f"recipe_images/error_{uuid.uuid4()}{ext}"
         except Exception as e:
             print(f"Error in file_path: {e}")
