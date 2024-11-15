@@ -1,12 +1,12 @@
 {
     "all.hot": 100,
     "all.pop": 100,
-    "category._default": 5,
-    "category.jiachangcai": 30,
-    "category.liangcai": 30,
-    "category.recai": 30,
-    "category.tianpin": 20,
-    "category.xiaochi": 20,
-    "category.xican": 30,
-    "category.zhushi": 20
+    "category._default": 30,
+    "category.jiachangcai": 100,
+    "category.liangcai": 100,
+    "category.recai": 100,
+    "category.tianpin": 100,
+    "category.xiaochi": 100,
+    "category.xican": 100,
+    "category.zhushi": 100
 }
